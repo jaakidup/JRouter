@@ -36,8 +36,6 @@ func main() {
 	router.GET("/get", test)
 	router.GET("/", indexHandler)
 
-	router.Routes.ListKeys()
-
 	go func() {
 
 		sig := <-sigs
