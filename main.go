@@ -16,7 +16,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func testPost(w http.ResponseWriter, r *http.Request) {
-	output := "Test function"
+	output := "TestPost function"
 	io.WriteString(w, output)
 }
 
@@ -34,7 +34,7 @@ func main() {
 
 	router.POST("/post", testPost)
 	router.GET("/get", test)
-	router.GET("/", indexHandler)
+	router.NotFound = http.FileServer(http.Dir("public"))
 
 	go func() {
 
@@ -48,7 +48,11 @@ func main() {
 		log.Fatal(http.ListenAndServe(":8080", router))
 	}()
 
-	fmt.Println("Awaiting Signal")
+	fmt.Println("")
+	router.Logger("JRouter running on port :8080")
+	fmt.Println("")
+
+	fmt.Println("CTRL + C to shutdown")
 	<-done
 	fmt.Println("Shutdown procedure")
 

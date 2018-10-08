@@ -2,11 +2,13 @@
 
 Simple http router with GET, POST wrappers
 
+
+
   
 ##  TODO
 
   
+ - Add remove PATH registration function
+ - Display currently active routes
 
- - handle OPTIONS replay automatically, if set
- - add remove PATH registration function
 

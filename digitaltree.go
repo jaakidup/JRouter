@@ -39,7 +39,7 @@ type DigitalTree struct {
 func NewDigitalTree() *DigitalTree {
 	return &DigitalTree{
 		Root: &Node{
-			Name:  "Root",
+			Name:  "ROOT",
 			Child: make(map[string]*Node),
 		},
 	}
