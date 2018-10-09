@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
@@ -10,31 +9,28 @@ import (
 	"syscall"
 )
 
-func indexHandler(w http.ResponseWriter, r *http.Request) {
-	output := "Index Route     / "
-	io.WriteString(w, output)
-}
+var router *Router
 
-func testPost(w http.ResponseWriter, r *http.Request) {
-	output := "TestPost function"
-	io.WriteString(w, output)
-}
+// ConfigRouting sets up all the server routes
+func ConfigRouting() {
 
-func test(w http.ResponseWriter, r *http.Request) {
-	output := "Test function"
-	io.WriteString(w, output)
+	router = &Router{DebugLog: true}
+	router.POST("/post", router.testPost)
+	router.GET("/get", router.testGet)
+	router.GET("/remove", router.testRemove)
+	router.GET("/list", router.listHandler)
+	router.NotFoundHandler = http.FileServer(http.Dir("public"))
+	router.AdminHandler = router.adminHandler
+
 }
 
 func main() {
+
+	ConfigRouting()
+
 	sigs := make(chan os.Signal, 1)
 	done := make(chan bool, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-
-	router := &Router{DebugLog: true}
-
-	router.POST("/post", testPost)
-	router.GET("/get", test)
-	router.NotFound = http.FileServer(http.Dir("public"))
 
 	go func() {
 
@@ -45,11 +41,11 @@ func main() {
 		done <- true
 	}()
 	go func() {
-		log.Fatal(http.ListenAndServe(":8080", router))
+		log.Fatal(http.ListenAndServe(":8081", router))
 	}()
 
 	fmt.Println("")
-	router.Logger("JRouter running on port :8080")
+	router.Logger("JRouter running on port :8081")
 	fmt.Println("")
 
 	fmt.Println("CTRL + C to shutdown")
