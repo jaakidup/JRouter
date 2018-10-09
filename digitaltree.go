@@ -154,14 +154,11 @@ func (dt *DigitalTree) ListKeys(name string) *ResultSet {
 	resultSet := NewResultSet(name)
 	Walk("", dt.Root, resultSet)
 
-	// fmt.Println("Ok, let's see:")
 	var count int
-	// fmt.Println(resultSet.Name)
 	for index, word := range resultSet.Results {
 		fmt.Println(index, word)
 		count++
 	}
-	// fmt.Printf("Found %v words\n", count)
 	resultSet.Count = count
 	return resultSet
 }
