@@ -15,10 +15,10 @@ var router *Router
 func ConfigRouting() {
 
 	router = &Router{DebugLog: true}
-	router.POST("/post", router.testPost)
-	router.GET("/get", router.testGet)
-	router.GET("/remove", router.testRemove)
-	router.GET("/list", router.listHandler)
+	router.POST("/post", router.LogWrapper(router.testPost))
+	router.GET("/get", router.LogWrapper(router.testGet))
+	router.GET("/remove", router.LogWrapper(router.testRemove))
+	router.GET("/list", router.LogWrapper(router.listHandler))
 
 	router.NotFoundHandler = http.FileServer(http.Dir("public"))
 	router.AdminHandler = router.adminHandler
@@ -51,6 +51,7 @@ func main() {
 
 	fmt.Println("CTRL + C to shutdown")
 	<-done
-	fmt.Println("Shutdown procedure")
+	fmt.Println("Shutdown procedure ...")
+	router.WriteToAdminConsole("JRouter Shutdown procedure ...")
 
 }

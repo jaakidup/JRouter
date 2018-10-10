@@ -1,7 +1,5 @@
 package main
 
-import "fmt"
-
 // Node ...
 type Node struct {
 	Path    string
@@ -154,12 +152,7 @@ func (dt *DigitalTree) ListKeys(name string) *ResultSet {
 	resultSet := NewResultSet(name)
 	Walk("", dt.Root, resultSet)
 
-	var count int
-	for index, word := range resultSet.Results {
-		fmt.Println(index, word)
-		count++
-	}
-	resultSet.Count = count
+	resultSet.Count = len(resultSet.Results)
 	return resultSet
 }
 

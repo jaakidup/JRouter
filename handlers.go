@@ -7,15 +7,14 @@ import (
 )
 
 func (router *Router) listHandler(w http.ResponseWriter, r *http.Request) {
-	jenc := json.NewEncoder(w)
+	w.Header().Set("Content-Type", "application/json")
 
 	var results []interface{}
 
 	results = append(results, router.Routes["GET"].ListKeys("GET"))
 	results = append(results, router.Routes["POST"].ListKeys("POST"))
-	// results = append(results, router.Routes["OPTIONS"].ListKeys("OPTIONS"))
 
-	jenc.Encode(results)
+	json.NewEncoder(w).Encode(results)
 }
 
 func (router *Router) testPost(w http.ResponseWriter, r *http.Request) {
@@ -23,8 +22,12 @@ func (router *Router) testPost(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, output)
 }
 func (router *Router) testGet(w http.ResponseWriter, r *http.Request) {
+
+	router.WriteToAdminConsole("Hello")
+
 	output := "TestGet function"
 	io.WriteString(w, output)
+
 }
 
 func (router *Router) testRemove(w http.ResponseWriter, r *http.Request) {
@@ -44,22 +47,5 @@ func defaultHeaders(h Handle) Handle {
 		w.Header().Set("Access-Control-Allow-Credentials", "true")
 		w.Header().Set("Content-Type", "application/json")
 		h(w, r)
-	}
-}
-
-// ExtractJSON ...
-func ExtractJSON(h JSONHandle, requestJSON interface{}) JSONHandle {
-	return func(w http.ResponseWriter, r *http.Request, requestJSON interface{}) {
-
-		type RequestJSON struct {
-			Type string `json:"type,omitempty"`
-			Body string `json:"body,omitempty"`
-		}
-
-		request := &RequestJSON{}
-
-		json.NewDecoder(r.Body).Decode(request)
-
-		h(w, r, *request)
 	}
 }

@@ -2,15 +2,13 @@ package main
 
 import (
 	"html"
-	"log"
 	"net/http"
+
+	"github.com/gorilla/websocket"
 )
 
 // Handle ...
 type Handle func(w http.ResponseWriter, r *http.Request)
-
-// JSONHandle ...
-type JSONHandle func(w http.ResponseWriter, r *http.Request, requestJSON interface{})
 
 // Router ...
 type Router struct {
@@ -19,6 +17,8 @@ type Router struct {
 	DebugLog        bool
 	NotFoundHandler http.Handler
 	AdminHandler    http.HandlerFunc
+	AdminConnected  bool
+	AdminConnection *websocket.Conn
 }
 
 // New ...
@@ -50,7 +50,6 @@ func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	method := html.EscapeString(r.Method)
 	path := html.EscapeString(r.URL.Path)
-	router.Logger("Serving", r.RemoteAddr, " on ", method, path)
 
 	if method == "OPTIONS" {
 		router.OptionsHandler(w, r)
@@ -99,9 +98,18 @@ func (router *Router) Unregister(method string, path string) {
 
 // Logger logs the message[s] on a single line if debug:true
 // TODO: send logs over channel to admin section
-func (router *Router) Logger(message ...interface{}) {
+func (router *Router) Logger(message ...string) {
 	if router.DebugLog {
-		log.Println(message...)
+		// log.Println(message...)
+		router.WriteToAdminConsole(message...)
+	}
+}
+
+// LogWrapper is wrapped around the handler to send logs to admin console
+func (router *Router) LogWrapper(h Handle) Handle {
+	return func(w http.ResponseWriter, r *http.Request) {
+		router.WriteToAdminConsole("Received request[" + r.Method + "][" + r.RemoteAddr + "][" + r.RequestURI + "]")
+		h(w, r)
 	}
 }
 
