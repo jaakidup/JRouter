@@ -19,6 +19,7 @@ func ConfigRouting() {
 	router.GET("/get", router.testGet)
 	router.GET("/remove", router.testRemove)
 	router.GET("/list", router.listHandler)
+
 	router.NotFoundHandler = http.FileServer(http.Dir("public"))
 	router.AdminHandler = router.adminHandler
 

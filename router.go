@@ -9,6 +9,9 @@ import (
 // Handle ...
 type Handle func(w http.ResponseWriter, r *http.Request)
 
+// JSONHandle ...
+type JSONHandle func(w http.ResponseWriter, r *http.Request, requestJSON interface{})
+
 // Router ...
 type Router struct {
 	AutoOptions     bool
