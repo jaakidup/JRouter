@@ -2,9 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"html"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/websocket"
 )
@@ -57,43 +59,69 @@ func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	method := html.EscapeString(r.Method)
 	path := html.EscapeString(r.URL.Path)
 
+	router.Logger(method + " " + path)
+
 	if method == "OPTIONS" {
 		router.OptionsHandler(w, r)
 		goto SKIPFOROPTIONS
 	}
 
-	if path == "/" {
-		router.NotFoundHandler.ServeHTTP(w, r)
-	} else if path == "/admin" {
-		router.AdminHandler(w, r)
-	} else {
-		found, jfunc := router.Routes[method].Find(path)
-		if found {
-			jfunc(w, r)
-		} else {
-			if router.NotFoundHandler == nil {
-				router.ErrorHandler(w, r)
-			} else {
-				router.NotFoundHandler.ServeHTTP(w, r)
-			}
-		}
-	}
+	// TODO:  Re-engineer the switcher
+	// if path == "/" {
+	// 	router.NotFoundHandler.ServeHTTP(w, r)
+	// } else if path == "/admin" {
+	// 	router.AdminHandler(w, r)
+	// } else {
+	// 	found, jfunc := router.Routes[method].Find(path)
+	// 	if found {
+	// 		jfunc(w, r)
+	// 	} else {
+	// 		if router.NotFoundHandler == nil {
+	// 			router.ErrorHandler(w, r)
+	// 		} else {
+	// 			router.NotFoundHandler.ServeHTTP(w, r)
+	// 		}
+	// 	}
+	// }
 SKIPFOROPTIONS:
 }
 
 // Register ...
 func (router *Router) Register(method string, path string, handle Handle) {
 
+	paramkey := "@"
+
+	sections := strings.Split(path, "/")
+	var params []string
+
+	if strings.ContainsAny(path, paramkey) {
+		fmt.Println("Path contains parameter, strip them out and store them in the DigitalTree")
+		for _, entry := range sections {
+			fmt.Println(entry)
+			if strings.Contains(entry, paramkey) {
+				params = append(params, strings.Split(entry, paramkey)[1])
+			}
+		}
+	} else {
+		fmt.Println("No ", paramkey, " found, so doesn't look like there are any parameters")
+	}
+
+	if len(params) != 0 {
+		fmt.Println(path, params)
+	} else {
+		fmt.Println(path)
+	}
+
 	if router.Routes == nil {
 		router.Routes = make(map[string]*DigitalTree)
 	}
 
 	if router.Routes[method] == nil {
-		router.Logger("Routes for Method: " + method + "is nil, let's create")
+		router.Logger("Routes for Method: " + method + " is nil, let's create")
 		router.Routes[method] = NewDigitalTree()
 	}
 
-	router.Logger("Registering: " + method + path)
+	router.Logger("Registering: " + method + " " + path)
 	router.Routes[method].Add(path, handle)
 }
 
