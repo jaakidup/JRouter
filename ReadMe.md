@@ -1,11 +1,16 @@
 #  JROUTER
 
-Simple http router with GET, POST, DELETE and UPDATE wrappers
+Simple http router with GET, POST, DELETE PUT and PATCH wrappers
 
+This is just in the beginning phase and testing some ideas.
 
+## Ideas
+- Auth service
+- GEO service
+- Full Text service
 
 ##  History
-- DELETE + UPDATE 
+- DELETE + PUT + PATH added 
 
 
 ##  TODO

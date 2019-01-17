@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"html"
+	"log"
 	"net/http"
 
 	"github.com/gorilla/websocket"
@@ -48,6 +49,10 @@ func (router *Router) OptionsHandler(w http.ResponseWriter, r *http.Request) {
 
 // ServerHTTP ...
 func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+
+	// TODO: ===================================== //
+	// TODO: build out to handle parameters
+	// TODO: ===================================== //
 
 	method := html.EscapeString(r.Method)
 	path := html.EscapeString(r.URL.Path)
@@ -98,10 +103,9 @@ func (router *Router) Unregister(method string, path string) {
 }
 
 // Logger logs the message[s] on a single line if debug:true
-// TODO: send logs over channel to admin section
 func (router *Router) Logger(message interface{}) {
 	if router.DebugLog {
-		// log.Println(message...)
+		log.Println(message)
 		router.WriteToAdminConsole(message)
 	}
 }
@@ -131,9 +135,14 @@ func (router *Router) DELETE(path string, handle Handle) {
 	router.Register("DELETE", path, handle)
 }
 
-// UPDATE ...
-func (router *Router) UPDATE(path string, handle Handle) {
-	router.Register("UPDATE", path, handle)
+// PUT ...
+func (router *Router) PUT(path string, handle Handle) {
+	router.Register("PUT", path, handle)
+}
+
+// PATCH ...
+func (router *Router) PATCH(path string, handle Handle) {
+	router.Register("PATCH", path, handle)
 }
 
 // GET ...
