@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"html"
 	"net/http"
 
@@ -83,11 +84,11 @@ func (router *Router) Register(method string, path string, handle Handle) {
 	}
 
 	if router.Routes[method] == nil {
-		router.Logger("Routes for Method", method, "is nil, let's create")
+		router.Logger("Routes for Method: " + method + "is nil, let's create")
 		router.Routes[method] = NewDigitalTree()
 	}
 
-	router.Logger("Registering: ", method, path)
+	router.Logger("Registering: " + method + path)
 	router.Routes[method].Add(path, handle)
 }
 
@@ -98,10 +99,10 @@ func (router *Router) Unregister(method string, path string) {
 
 // Logger logs the message[s] on a single line if debug:true
 // TODO: send logs over channel to admin section
-func (router *Router) Logger(message ...string) {
+func (router *Router) Logger(message interface{}) {
 	if router.DebugLog {
 		// log.Println(message...)
-		router.WriteToAdminConsole(message...)
+		router.WriteToAdminConsole(message)
 	}
 }
 
@@ -109,6 +110,13 @@ func (router *Router) Logger(message ...string) {
 func (router *Router) LogWrapper(h Handle) Handle {
 	return func(w http.ResponseWriter, r *http.Request) {
 		router.WriteToAdminConsole("Received request[" + r.Method + "][" + r.RemoteAddr + "][" + r.RequestURI + "]")
+
+		var report interface{}
+
+		json.NewDecoder(r.Body).Decode(&report)
+
+		router.WriteToAdminConsole(report)
+
 		h(w, r)
 	}
 }
@@ -116,6 +124,16 @@ func (router *Router) LogWrapper(h Handle) Handle {
 // POST ...
 func (router *Router) POST(path string, handle Handle) {
 	router.Register("POST", path, handle)
+}
+
+// DELETE ...
+func (router *Router) DELETE(path string, handle Handle) {
+	router.Register("DELETE", path, handle)
+}
+
+// UPDATE ...
+func (router *Router) UPDATE(path string, handle Handle) {
+	router.Register("UPDATE", path, handle)
 }
 
 // GET ...

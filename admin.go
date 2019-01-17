@@ -69,19 +69,20 @@ NOWEBSOCKET:
 }
 
 // WriteToAdminConsole ...
-func (router *Router) WriteToAdminConsole(message ...string) {
-	var messages []string
-	messages = append(messages, message...)
+func (router *Router) WriteToAdminConsole(message interface{}) {
+	// func (router *Router) WriteToAdminConsole(message ...string) {
+	// var messages []string
+	// messages = append(messages, message...)
 
-	output := struct {
-		Type    string   `json:"type,omitempty"`
-		Message []string `json:"message,omitempty"`
-	}{
-		Type:    "test Json message",
-		Message: messages,
-	}
+	// output := struct {
+	// 	Type    string   `json:"type,omitempty"`
+	// 	Message []string `json:"message,omitempty"`
+	// }{
+	// 	Type:    "test Json message",
+	// 	Message: messages,
+	// }
 
 	if router.AdminConnected {
-		router.AdminConnection.WriteJSON(output)
+		router.AdminConnection.WriteJSON(message)
 	}
 }
