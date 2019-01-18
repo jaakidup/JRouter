@@ -1,12 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
 )
 
 var router *Router
@@ -16,7 +12,8 @@ func ConfigRouting() {
 
 	router = &Router{DebugLog: true}
 
-	router.GET("/get/@id", router.LogWrapper(router.testGet))
+	router.GET("/person/@id", router.LogWrapper(router.testGet))
+	// router.GET("/test/@id/@number", router.LogWrapper(router.testGet))
 	// router.POST("/post/", router.LogWrapper(router.testPost))
 	// router.GET("/remove/", router.LogWrapper(router.testRemove))
 	// router.GET("/list/", router.LogWrapper(router.listHandler))
@@ -30,29 +27,31 @@ func main() {
 
 	ConfigRouting()
 
-	sigs := make(chan os.Signal, 1)
-	done := make(chan bool, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	log.Fatal(http.ListenAndServe(":8081", router))
 
-	go func() {
+	// sigs := make(chan os.Signal, 1)
+	// done := make(chan bool, 1)
+	// signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
-		sig := <-sigs
-		fmt.Println()
-		fmt.Println(sig)
+	// go func() {
 
-		done <- true
-	}()
-	go func() {
-		log.Fatal(http.ListenAndServe(":8081", router))
-	}()
+	// 	sig := <-sigs
+	// 	fmt.Println()
+	// 	fmt.Println(sig)
 
-	fmt.Println("")
-	router.Logger("JRouter running on port :8081")
-	fmt.Println("")
+	// 	done <- true
+	// }()
+	// go func() {
+	// 	log.Fatal(http.ListenAndServe(":8081", router))
+	// }()
 
-	fmt.Println("CTRL + C to shutdown")
-	<-done
-	fmt.Println("Shutdown procedure ...")
-	router.WriteToAdminConsole("JRouter Shutdown procedure ...")
+	// fmt.Println("")
+	// router.Logger("JRouter running on port :8081")
+	// fmt.Println("")
+
+	// fmt.Println("CTRL + C to shutdown")
+	// <-done
+	// fmt.Println("Shutdown procedure ...")
+	// router.WriteToAdminConsole("JRouter Shutdown procedure ...")
 
 }

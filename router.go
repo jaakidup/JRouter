@@ -66,23 +66,25 @@ func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		goto SKIPFOROPTIONS
 	}
 
-	// TODO:  Re-engineer the switcher
-	// if path == "/" {
-	// 	router.NotFoundHandler.ServeHTTP(w, r)
-	// } else if path == "/admin" {
-	// 	router.AdminHandler(w, r)
-	// } else {
-	// 	found, jfunc := router.Routes[method].Find(path)
-	// 	if found {
-	// 		jfunc(w, r)
-	// 	} else {
-	// 		if router.NotFoundHandler == nil {
-	// 			router.ErrorHandler(w, r)
-	// 		} else {
-	// 			router.NotFoundHandler.ServeHTTP(w, r)
-	// 		}
-	// 	}
-	// }
+	if path == "/" {
+		router.NotFoundHandler.ServeHTTP(w, r)
+	} else if path == "/admin" {
+		router.AdminHandler(w, r)
+	} else {
+
+		// TODO: handle parameters
+
+		found, jfunc := router.Routes[method].Find(path)
+		if found {
+			jfunc(w, r)
+		} else {
+			if router.NotFoundHandler == nil {
+				router.ErrorHandler(w, r)
+			} else {
+				router.NotFoundHandler.ServeHTTP(w, r)
+			}
+		}
+	}
 SKIPFOROPTIONS:
 }
 
@@ -92,8 +94,9 @@ func (router *Router) Register(method string, path string, handle Handle) {
 	paramkey := "@"
 
 	sections := strings.Split(path, "/")
-	var params []string
 
+	// TODO: params should be a map, to make it ordered
+	var params []string
 	if strings.ContainsAny(path, paramkey) {
 		fmt.Println("Path contains parameter, strip them out and store them in the DigitalTree")
 		for _, entry := range sections {
@@ -171,6 +174,11 @@ func (router *Router) PUT(path string, handle Handle) {
 // PATCH ...
 func (router *Router) PATCH(path string, handle Handle) {
 	router.Register("PATCH", path, handle)
+}
+
+// HEAD ...
+func (router *Router) HEAD(path string, handle Handle) {
+	router.Register("HEAD", path, handle)
 }
 
 // GET ...
