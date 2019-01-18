@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func (router *Router) listHandler(w http.ResponseWriter, r *http.Request) {
+func (router *Router) listHandler(w http.ResponseWriter, r *http.Request, params map[int]string) {
 	w.Header().Set("Content-Type", "application/json")
 
 	var results []interface{}
@@ -17,21 +17,21 @@ func (router *Router) listHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(results)
 }
 
-func (router *Router) getPerson(w http.ResponseWriter, r *http.Request) {
+func (router *Router) getPerson(w http.ResponseWriter, r *http.Request, params map[int]string) {
 	// w.WriteHeader(200)
 
 	// send it through to the logic circuits
 
 	var results []interface{}
-	results = append(results, "something")
-	results = append(results, "Cool")
+	results = append(results, "Cool Beans!")
+	results = append(results, params)
 
 	json.NewEncoder(w).Encode(results)
 
 	// io.WriteString(w, output)
 }
 
-func (router *Router) testGet(w http.ResponseWriter, r *http.Request) {
+func (router *Router) testGet(w http.ResponseWriter, r *http.Request, params map[int]string) {
 
 	router.WriteToAdminConsole("Hello")
 
@@ -40,7 +40,7 @@ func (router *Router) testGet(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (router *Router) testRemove(w http.ResponseWriter, r *http.Request) {
+func (router *Router) testRemove(w http.ResponseWriter, r *http.Request, params map[int]string) {
 
 	router.Unregister("GET", "/get")
 
@@ -48,7 +48,7 @@ func (router *Router) testRemove(w http.ResponseWriter, r *http.Request) {
 }
 
 func defaultHeaders(h Handle) Handle {
-	return func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request, p map[int]string) {
 		if origin := r.Header.Get("Origin"); origin != "" {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
 		}
@@ -56,6 +56,6 @@ func defaultHeaders(h Handle) Handle {
 		w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token")
 		w.Header().Set("Access-Control-Allow-Credentials", "true")
 		w.Header().Set("Content-Type", "application/json")
-		h(w, r)
+		h(w, r, p)
 	}
 }

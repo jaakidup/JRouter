@@ -11,11 +11,11 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// Handle ...
-type Handle func(w http.ResponseWriter, r *http.Request)
-
 // // Handle ...
-// type Handle func(w http.ResponseWriter, r *http.Request, params map[int]string)
+// type Handle func(w http.ResponseWriter, r *http.Request)
+
+// Handle ...
+type Handle func(w http.ResponseWriter, r *http.Request, params map[int]string)
 
 // Router ...
 type Router struct {
@@ -78,13 +78,12 @@ func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		fmt.Println("Request came in for :", path)
 		fmt.Println("Pathobject:", pathobject)
-		// fmt.Println(pathobject[0])
 
 		// TODO: handle parameters
 
 		found, jfunc := router.Routes[method].Find(pathobject[0])
 		if found {
-			jfunc(w, r)
+			jfunc(w, r, pathobject)
 		} else {
 			fmt.Println("Didn't find route")
 			w.WriteHeader(404)
@@ -172,7 +171,7 @@ func (router *Router) Logger(message interface{}) {
 
 // LogWrapper is wrapped around the handler to send logs to admin console
 func (router *Router) LogWrapper(h Handle) Handle {
-	return func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request, p map[int]string) {
 		router.WriteToAdminConsole("Received request[" + r.Method + "][" + r.RemoteAddr + "][" + r.RequestURI + "]")
 
 		var report interface{}
@@ -181,7 +180,7 @@ func (router *Router) LogWrapper(h Handle) Handle {
 
 		router.WriteToAdminConsole(report)
 
-		h(w, r)
+		h(w, r, p)
 	}
 }
 
