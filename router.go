@@ -14,6 +14,9 @@ import (
 // Handle ...
 type Handle func(w http.ResponseWriter, r *http.Request)
 
+// // Handle ...
+// type Handle func(w http.ResponseWriter, r *http.Request, params map[int]string)
+
 // Router ...
 type Router struct {
 	AutoOptions     bool
@@ -36,7 +39,8 @@ func New() *Router {
 
 // ErrorHandler is the default error handler
 func (router *Router) ErrorHandler(w http.ResponseWriter, r *http.Request) {
-	router.Logger("Some error, still needs to be decided on.")
+	w.WriteHeader(420)
+	router.Logger("Enhance your calm")
 }
 
 // OptionsHandler will handle OPTIONS request if no other OPTIONS handler is declared
@@ -70,62 +74,87 @@ func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		router.AdminHandler(w, r)
 	} else {
 
+		pathobject := disectPath(path)
+
+		fmt.Println("Request came in for :", path)
+		fmt.Println("Pathobject:", pathobject)
+		// fmt.Println(pathobject[0])
+
 		// TODO: handle parameters
 
-		found, jfunc := router.Routes[method].Find(path)
+		found, jfunc := router.Routes[method].Find(pathobject[0])
 		if found {
 			jfunc(w, r)
 		} else {
-			if router.NotFoundHandler == nil {
-				router.ErrorHandler(w, r)
-			} else {
-				router.NotFoundHandler.ServeHTTP(w, r)
-			}
+			fmt.Println("Didn't find route")
+			w.WriteHeader(404)
 		}
+
+		// found, jfunc := router.Routes[method].Find(path)
+		// if found {
+		// 	jfunc(w, r)
+		// } else {
+		// 	fmt.Println("Didn't find route")
+		// 	w.WriteHeader(404)
+		// 	// if router.NotFoundHandler == nil {
+		// 	// 	router.ErrorHandler(w, r)
+		// 	// } else {
+		// 	// 	router.NotFoundHandler.ServeHTTP(w, r)
+		// 	// }
+		// }
 	}
 
 SKIPFOROPTIONS:
 }
 
+// ==================================================== //
+func splitPath(path string) []string {
+	fmt.Println("Splitter", path, strings.Split(path, "/"))
+	return strings.Split(path, "/")
+}
+
+func disectPath(path string) map[int]string {
+	paramkey := "@"
+
+	sections := splitPath(path)
+	params := make(map[int]string)
+
+	// if strings.ContainsAny(path, paramkey) {
+	// fmt.Println("Path contains parameter, strip them out and store them in the DigitalTree")
+	for i, entry := range sections {
+		index := i - 1
+		if index == -1 {
+			continue
+		}
+		if strings.Contains(entry, paramkey) {
+			params[index] = strings.Split(entry, paramkey)[1]
+		} else {
+			params[index] = entry
+		}
+	}
+	return params
+}
+
+// ==================================================== //
+
 // Register ...
 func (router *Router) Register(method string, path string, handle Handle) {
 
-	paramkey := "@"
+	pathobject := disectPath(path)
+	fmt.Println(len(pathobject), pathobject)
 
-	sections := strings.Split(path, "/")
-
-	// TODO: params should be a map, to make it ordered
-	var params []string
-
-	if strings.ContainsAny(path, paramkey) {
-		fmt.Println("Path contains parameter, strip them out and store them in the DigitalTree")
-		for _, entry := range sections {
-			fmt.Println(entry)
-			if strings.Contains(entry, paramkey) {
-				params = append(params, strings.Split(entry, paramkey)[1])
-			}
-		}
-	} else {
-		fmt.Println("No ", paramkey, " found, so doesn't look like there are any parameters")
-	}
-
-	if len(params) != 0 {
-		fmt.Println(path, params)
-	} else {
-		fmt.Println(path)
-	}
+	// TODO: register the
 
 	if router.Routes == nil {
 		router.Routes = make(map[string]*DigitalTree)
 	}
 
 	if router.Routes[method] == nil {
-		router.Logger("Routes for Method: " + method + "is nil, let's create")
 		router.Routes[method] = NewDigitalTree()
 	}
 
-	router.Logger("Registering: " + method + path)
-	router.Routes[method].Add(path, handle)
+	router.Logger("Registering: " + method + " " + pathobject[0])
+	router.Routes[method].Add(pathobject[0], handle)
 }
 
 // Unregister ...

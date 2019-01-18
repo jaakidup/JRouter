@@ -11,10 +11,10 @@ var router *Router
 func ConfigRouting() {
 
 	router = &Router{DebugLog: true}
-	router.POST("/post", router.LogWrapper(router.testPost))
-	router.GET("/get", router.LogWrapper(router.testGet))
-	router.GET("/remove", router.LogWrapper(router.testRemove))
-	router.GET("/list", router.LogWrapper(router.listHandler))
+	router.GET("/person/@something", router.LogWrapper(router.getPerson))
+	// router.GET("/get", router.LogWrapper(router.testGet))
+	// router.GET("/remove", router.LogWrapper(router.testRemove))
+	// router.GET("/list", router.LogWrapper(router.listHandler))
 
 	router.NotFoundHandler = http.FileServer(http.Dir("public"))
 	router.AdminHandler = router.adminHandler

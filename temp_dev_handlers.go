@@ -17,10 +17,20 @@ func (router *Router) listHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(results)
 }
 
-func (router *Router) testPost(w http.ResponseWriter, r *http.Request) {
-	output := "TestPost function"
-	io.WriteString(w, output)
+func (router *Router) getPerson(w http.ResponseWriter, r *http.Request) {
+	// w.WriteHeader(200)
+
+	// send it through to the logic circuits
+
+	var results []interface{}
+	results = append(results, "something")
+	results = append(results, "Cool")
+
+	json.NewEncoder(w).Encode(results)
+
+	// io.WriteString(w, output)
 }
+
 func (router *Router) testGet(w http.ResponseWriter, r *http.Request) {
 
 	router.WriteToAdminConsole("Hello")
