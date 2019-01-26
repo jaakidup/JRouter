@@ -15,7 +15,10 @@ import (
 // type Handle func(w http.ResponseWriter, r *http.Request)
 
 // Handle ...
-type Handle func(w http.ResponseWriter, r *http.Request, params map[int]string)
+type Handle func(w http.ResponseWriter, r *http.Request, params Params)
+
+// Params ...
+type Params map[int]string
 
 // Router ...
 type Router struct {
@@ -56,10 +59,6 @@ func (router *Router) OptionsHandler(w http.ResponseWriter, r *http.Request) {
 // ServerHTTP ...
 func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
-	// TODO: ===================================== //
-	// TODO: build out to handle parameters
-	// TODO: ===================================== //
-
 	method := html.EscapeString(r.Method)
 	path := html.EscapeString(r.URL.Path)
 
@@ -74,12 +73,7 @@ func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		router.AdminHandler(w, r)
 	} else {
 
-		pathobject := disectPath(path)
-
-		fmt.Println("Request came in for :", path)
-		fmt.Println("Pathobject:", pathobject)
-
-		// TODO: handle parameters
+		pathobject := router.disectPath(path)
 
 		found, jfunc := router.Routes[method].Find(pathobject[0])
 		if found {
@@ -88,34 +82,21 @@ func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("Didn't find route")
 			w.WriteHeader(404)
 		}
-
-		// found, jfunc := router.Routes[method].Find(path)
-		// if found {
-		// 	jfunc(w, r)
-		// } else {
-		// 	fmt.Println("Didn't find route")
-		// 	w.WriteHeader(404)
-		// 	// if router.NotFoundHandler == nil {
-		// 	// 	router.ErrorHandler(w, r)
-		// 	// } else {
-		// 	// 	router.NotFoundHandler.ServeHTTP(w, r)
-		// 	// }
-		// }
 	}
 
 SKIPFOROPTIONS:
 }
 
 // ==================================================== //
-func splitPath(path string) []string {
+func (*Router) splitPath(path string) []string {
 	fmt.Println("Splitter", path, strings.Split(path, "/"))
 	return strings.Split(path, "/")
 }
 
-func disectPath(path string) map[int]string {
+func (router *Router) disectPath(path string) Params {
 	paramkey := "@"
 
-	sections := splitPath(path)
+	sections := router.splitPath(path)
 	params := make(map[int]string)
 
 	// if strings.ContainsAny(path, paramkey) {
@@ -139,7 +120,7 @@ func disectPath(path string) map[int]string {
 // Register ...
 func (router *Router) Register(method string, path string, handle Handle) {
 
-	pathobject := disectPath(path)
+	pathobject := router.disectPath(path)
 	fmt.Println(len(pathobject), pathobject)
 
 	// TODO: register the
@@ -171,7 +152,7 @@ func (router *Router) Logger(message interface{}) {
 
 // LogWrapper is wrapped around the handler to send logs to admin console
 func (router *Router) LogWrapper(h Handle) Handle {
-	return func(w http.ResponseWriter, r *http.Request, p map[int]string) {
+	return func(w http.ResponseWriter, r *http.Request, p Params) {
 		router.WriteToAdminConsole("Received request[" + r.Method + "][" + r.RemoteAddr + "][" + r.RequestURI + "]")
 
 		var report interface{}

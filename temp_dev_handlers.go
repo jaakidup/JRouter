@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func (router *Router) listHandler(w http.ResponseWriter, r *http.Request, params map[int]string) {
+func (router *Router) listHandler(w http.ResponseWriter, r *http.Request, params Params) {
 	w.Header().Set("Content-Type", "application/json")
 
 	var results []interface{}
@@ -17,7 +17,7 @@ func (router *Router) listHandler(w http.ResponseWriter, r *http.Request, params
 	json.NewEncoder(w).Encode(results)
 }
 
-func (router *Router) getPerson(w http.ResponseWriter, r *http.Request, params map[int]string) {
+func (router *Router) getPerson(w http.ResponseWriter, r *http.Request, params Params) {
 	// w.WriteHeader(200)
 
 	// send it through to the logic circuits
@@ -31,16 +31,24 @@ func (router *Router) getPerson(w http.ResponseWriter, r *http.Request, params m
 	// io.WriteString(w, output)
 }
 
-func (router *Router) testGet(w http.ResponseWriter, r *http.Request, params map[int]string) {
+func (router *Router) testGet(w http.ResponseWriter, r *http.Request, params Params) {
 
-	router.WriteToAdminConsole("Hello")
+	// output := "TestGet function"
+	// io.WriteString(w, output)
 
-	output := "TestGet function"
-	io.WriteString(w, output)
+	reply := struct {
+		Request string
+		Params  Params
+	}{
+		Request: r.RequestURI,
+		Params:  params,
+	}
+
+	json.NewEncoder(w).Encode(reply)
 
 }
 
-func (router *Router) testRemove(w http.ResponseWriter, r *http.Request, params map[int]string) {
+func (router *Router) testRemove(w http.ResponseWriter, r *http.Request, params Params) {
 
 	router.Unregister("GET", "/get")
 
@@ -48,7 +56,7 @@ func (router *Router) testRemove(w http.ResponseWriter, r *http.Request, params 
 }
 
 func defaultHeaders(h Handle) Handle {
-	return func(w http.ResponseWriter, r *http.Request, p map[int]string) {
+	return func(w http.ResponseWriter, r *http.Request, p Params) {
 		if origin := r.Header.Get("Origin"); origin != "" {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
 		}
