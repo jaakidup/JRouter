@@ -12,7 +12,7 @@ func ConfigRouting() {
 
 	router = &Router{DebugLog: true}
 	router.GET("/person/@something", router.LogWrapper(router.getPerson))
-	router.GET("/test/@subtest/@teststring", router.testGet)
+	router.GET("/test/@sub/@cool", router.testGet)
 	// router.GET("/get", router.LogWrapper(router.testGet))
 	// router.GET("/remove", router.LogWrapper(router.testRemove))
 	// router.GET("/list", router.LogWrapper(router.listHandler))

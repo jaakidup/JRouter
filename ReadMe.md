@@ -9,10 +9,17 @@ Currently supports parameters in the form of http://localhost:8081/person/@id/@o
 
 
 	router = &Router{DebugLog: true}
-	router.GET("/person/@something", router.LogWrapper(router.getPerson))
+	router.GET("/person/@firstname/@lastname", router.LogWrapper(router.getPerson))
+
+
+## RoadMap
+
+- Auth Section, should be plugable
 
 
 ##  History
+- Added Parameter count checking
+- Added NamedParameter support
 - Added Parameter support
 - DELETE + PUT + PATH added 
 

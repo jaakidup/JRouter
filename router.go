@@ -12,10 +12,14 @@ import (
 )
 
 // Handle ...
-type Handle func(w http.ResponseWriter, r *http.Request, params Params)
+// type Handle func(w http.ResponseWriter, r *http.Request, params Params)
+type Handle func(w http.ResponseWriter, r *http.Request, params NamedParams)
 
 // Params ...
 type Params map[int]string
+
+// NamedParams ...
+type NamedParams map[string]string
 
 // Router ...
 type Router struct {
@@ -72,9 +76,28 @@ func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		pathobject := router.disectPath(path)
 
-		found, jfunc := router.Routes[method].Find(pathobject[0])
+		found, jfunc, params, paramCount := router.Routes[method].Find(pathobject[0])
+
+		fmt.Println("PathObject: ", pathobject)
+		fmt.Println(paramCount, params)
+
+		if len(pathobject) == paramCount {
+			fmt.Println("Yes, path and params are equal length.")
+		} else {
+			// TODO: clean up error handling
+			w.WriteHeader(400)
+			w.Write([]byte("Request parameters isn't what I expected."))
+			goto SKIPBADREQUEST
+		}
+		namedParams := make(map[string]string)
+		for index, key := range params {
+			namedParams[key] = pathobject[index]
+		}
+		// fmt.Println("NamedParams", namedParams)
+
 		if found {
-			jfunc(w, r, pathobject)
+			// jfunc(w, r, pathobject)
+			jfunc(w, r, namedParams)
 		} else {
 			fmt.Println("Didn't find route")
 			w.WriteHeader(404)
@@ -82,6 +105,7 @@ func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 SKIPFOROPTIONS:
+SKIPBADREQUEST:
 }
 
 // ==================================================== //
@@ -112,12 +136,34 @@ func (router *Router) disectPath(path string) Params {
 	return params
 }
 
+func (router *Router) pathObjectForRegister(path string) Params {
+	paramkey := "@"
+
+	sections := router.splitPath(path)
+	params := make(map[int]string)
+
+	// if strings.ContainsAny(path, paramkey) {
+	// fmt.Println("Path contains parameter, strip them out and store them in the DigitalTree")
+	for i, entry := range sections {
+		index := i - 1
+		if index == -1 {
+			continue
+		}
+		if strings.Contains(entry, paramkey) {
+			params[index] = strings.Split(entry, paramkey)[1]
+		} else {
+			params[index] = entry
+		}
+	}
+	return params
+}
+
 // ==================================================== //
 
 // Register ...
 func (router *Router) Register(method string, path string, handle Handle) {
 
-	pathobject := router.disectPath(path)
+	pathobject := router.pathObjectForRegister(path)
 	fmt.Println(len(pathobject), pathobject)
 
 	if router.Routes == nil {
@@ -129,7 +175,7 @@ func (router *Router) Register(method string, path string, handle Handle) {
 	}
 
 	router.Logger("Registering: " + method + " " + pathobject[0])
-	router.Routes[method].Add(pathobject[0], handle)
+	router.Routes[method].Add(pathobject[0], handle, pathobject)
 }
 
 // Unregister ...
@@ -147,7 +193,7 @@ func (router *Router) Logger(message interface{}) {
 
 // LogWrapper is wrapped around the handler to send logs to admin console
 func (router *Router) LogWrapper(h Handle) Handle {
-	return func(w http.ResponseWriter, r *http.Request, p Params) {
+	return func(w http.ResponseWriter, r *http.Request, p NamedParams) {
 		router.WriteToAdminConsole("Received request[" + r.Method + "][" + r.RemoteAddr + "][" + r.RequestURI + "]")
 
 		var report interface{}

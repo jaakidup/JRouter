@@ -2,14 +2,16 @@ package main
 
 // Node ...
 type Node struct {
-	Path    string
-	Name    string
-	Value   string
-	End     bool
-	Delete  bool
-	Payload Handle
-	Parent  *Node
-	Child   map[string]*Node
+	Path      string
+	Name      string
+	Value     string
+	End       bool
+	Delete    bool
+	Handler   Handle
+	Params    Params
+	MaxParams int
+	Parent    *Node
+	Child     map[string]*Node
 }
 
 func (n *Node) hasChildren() bool {
@@ -42,7 +44,7 @@ func NewDigitalTree() *DigitalTree {
 }
 
 // Add a word to the DigitalTree
-func (dt *DigitalTree) Add(word string, payload Handle) {
+func (dt *DigitalTree) Add(word string, handler Handle, params Params) {
 	node := dt.Root
 	var path string
 
@@ -61,15 +63,26 @@ func (dt *DigitalTree) Add(word string, payload Handle) {
 			node = node.Child[char]
 		}
 	}
-	node.Payload = payload
+	node.Handler = handler
+	node.Params = params
+
+	if len(params) >= 2 {
+		node.Params = params
+		// node.MaxParams = len(params) -1 // remove the function call
+		node.MaxParams = len(params)
+	} else {
+		node.Params = nil
+		node.MaxParams = 0
+	}
+
 	node.End = true
 }
 
 // Find by key
 // @word string, key for lookup
 // return: truthy if found, falsy if not found
-// return payload if found
-func (dt *DigitalTree) Find(word string) (bool, Handle) {
+// return handler if found
+func (dt *DigitalTree) Find(word string) (bool, Handle, Params, int) {
 	node := dt.Root
 
 	for _, letter := range word {
@@ -78,13 +91,14 @@ func (dt *DigitalTree) Find(word string) (bool, Handle) {
 		if found {
 			node = node.Child[char]
 		} else {
-			return false, nil
+			return false, nil, nil, 0
 		}
 	}
 	if !node.End {
-		return false, nil
+		return false, nil, nil, 0
+		// return false, nil
 	}
-	return true, node.Payload
+	return true, node.Handler, node.Params, node.MaxParams
 }
 
 // Return the last node of the word
@@ -96,7 +110,7 @@ func (dt *DigitalTree) lastNodeOf(word string) *Node {
 	return node
 }
 
-// Delete a word and payload
+// Delete a word and handler
 func (dt *DigitalTree) Delete(word string) {
 	lastNode := dt.lastNodeOf(word)
 	deleter(lastNode, word, true)
@@ -126,11 +140,11 @@ func deleter(node *Node, word string, first bool) {
 
 	if node.hasChildren() {
 		node.End = false
-		node.Payload = nil
+		node.Handler = nil
 	}
 	if !node.hasChildren() {
 		node.End = false
-		node.Payload = nil
+		node.Handler = nil
 
 		node = node.Parent
 
