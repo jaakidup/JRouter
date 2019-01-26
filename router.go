@@ -11,9 +11,6 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// // Handle ...
-// type Handle func(w http.ResponseWriter, r *http.Request)
-
 // Handle ...
 type Handle func(w http.ResponseWriter, r *http.Request, params Params)
 
@@ -122,8 +119,6 @@ func (router *Router) Register(method string, path string, handle Handle) {
 
 	pathobject := router.disectPath(path)
 	fmt.Println(len(pathobject), pathobject)
-
-	// TODO: register the
 
 	if router.Routes == nil {
 		router.Routes = make(map[string]*DigitalTree)
