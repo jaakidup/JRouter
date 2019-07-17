@@ -1,14 +1,64 @@
-package main
+package jaakitrouter
+
+// ================================================================== //
+//
+// 	JRouter
+//
+//	HTTP Router for REST Apis
+//
+//
+//	@Jaakit @Jaakidup
+//
+// ================================================================== //
+
+// import (
+// 	"encoding/json"
+// 	"log"
+// 	"net/http"
+// )
+
+// var router *Router
+
+// func main() {
+
+// 	router = &Router{DebugLog: true}
+
+// 	router.GET("/person/@something/@spectacular", router.LogWrapper(router.getUsers))
+// 	router.GET("/list", router.listHandler)
+// 	router.GET("/", router.index)
+
+// 	router.Logger("Starting Server on :8081")
+// 	log.Fatal(http.ListenAndServe(":8081", router))
+
+// }
+
+// func (router *Router) index(w http.ResponseWriter, r *http.Request, _ NamedParams) {
+// 	w.Write([]byte("<div align='center'>Index page, use GET /users</div>"))
+// }
+
+// func (router *Router) getUsers(w http.ResponseWriter, r *http.Request, params NamedParams) {
+// 	w.Header().Set("content-type", "application/json")
+// 	json.NewEncoder(w).Encode(params)
+// }
+
+// func (router *Router) listHandler(w http.ResponseWriter, r *http.Request, params NamedParams) {
+// 	w.Header().Set("Content-Type", "application/json")
+
+// 	var results []interface{}
+
+// 	results = append(results, router.Routes["GET"].ListKeys("GET"))
+// 	results = append(results, router.Routes["POST"].ListKeys("POST"))
+
+// 	json.NewEncoder(w).Encode(results)
+// }
 
 import (
-	"encoding/json"
 	"fmt"
 	"html"
 	"log"
 	"net/http"
 	"strings"
-
-	"github.com/gorilla/websocket"
+	"time"
 )
 
 // Handle ...
@@ -27,9 +77,6 @@ type Router struct {
 	Routes          map[string]*DigitalTree
 	DebugLog        bool
 	NotFoundHandler http.Handler
-	AdminHandler    http.HandlerFunc
-	AdminConnected  bool
-	AdminConnection *websocket.Conn
 }
 
 // New ...
@@ -63,87 +110,53 @@ func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	method := html.EscapeString(r.Method)
 	path := html.EscapeString(r.URL.Path)
 
-	if method == "OPTIONS" {
-		router.OptionsHandler(w, r)
-		goto SKIPFOROPTIONS
-	}
+	pathobject := router.disectPath(path)
 
-	if path == "/" {
-		router.NotFoundHandler.ServeHTTP(w, r)
-	} else if path == "/admin" {
-		router.AdminHandler(w, r)
-	} else {
+	// TODO: add check for OPTIONS handlers, otherwise ahndle OPTION if set to true
+	// if method == "OPTIONS" {
+	// 	router.OptionsHandler(w, r)
+	// }
 
-		pathobject := router.disectPath(path)
-
-		found, jfunc, params, paramCount := router.Routes[method].Find(pathobject[0])
-
-		fmt.Println("PathObject: ", pathobject)
-		fmt.Println(paramCount, params)
-
-		if len(pathobject) == paramCount {
-			fmt.Println("Yes, path and params are equal length.")
-		} else {
-			// TODO: clean up error handling
-			w.WriteHeader(400)
-			w.Write([]byte("Request parameters isn't what I expected."))
-			goto SKIPBADREQUEST
-		}
+	found, jfunc, params, _ := router.Routes[method].Find(pathobject[1])
+	if found {
 		namedParams := make(map[string]string)
 		for index, key := range params {
-			namedParams[key] = pathobject[index]
+			namedParams[key] = pathobject[index+1]
 		}
-		// fmt.Println("NamedParams", namedParams)
+		jfunc(w, r, namedParams)
 
-		if found {
-			// jfunc(w, r, pathobject)
-			jfunc(w, r, namedParams)
-		} else {
-			fmt.Println("Didn't find route")
-			w.WriteHeader(404)
-		}
+	} else {
+		fmt.Println("Didn't find route")
+		w.WriteHeader(404)
 	}
-
-SKIPFOROPTIONS:
-SKIPBADREQUEST:
-}
-
-// ==================================================== //
-func (*Router) splitPath(path string) []string {
-	fmt.Println("Splitter", path, strings.Split(path, "/"))
-	return strings.Split(path, "/")
 }
 
 func (router *Router) disectPath(path string) Params {
-	paramkey := "@"
 
-	sections := router.splitPath(path)
+	sections := strings.Split(path, "/")
+	pathlen := len(sections)
+	if pathlen == 1 || pathlen == 0 || len(sections[1]) == 0 {
+		return nil
+	}
+
 	params := make(map[int]string)
 
-	// if strings.ContainsAny(path, paramkey) {
-	// fmt.Println("Path contains parameter, strip them out and store them in the DigitalTree")
-	for i, entry := range sections {
-		index := i - 1
-		if index == -1 {
-			continue
-		}
-		if strings.Contains(entry, paramkey) {
-			params[index] = strings.Split(entry, paramkey)[1]
-		} else {
-			params[index] = entry
-		}
+	for i := 0; i < len(sections); i++ {
+		params[i] = sections[i]
 	}
+
 	return params
 }
 
 func (router *Router) pathObjectForRegister(path string) Params {
 	paramkey := "@"
 
-	sections := router.splitPath(path)
+	sections := strings.Split(path, "/")
+
+	fmt.Println("register", sections)
+
 	params := make(map[int]string)
 
-	// if strings.ContainsAny(path, paramkey) {
-	// fmt.Println("Path contains parameter, strip them out and store them in the DigitalTree")
 	for i, entry := range sections {
 		index := i - 1
 		if index == -1 {
@@ -158,13 +171,10 @@ func (router *Router) pathObjectForRegister(path string) Params {
 	return params
 }
 
-// ==================================================== //
-
 // Register ...
 func (router *Router) Register(method string, path string, handle Handle) {
 
 	pathobject := router.pathObjectForRegister(path)
-	fmt.Println(len(pathobject), pathobject)
 
 	if router.Routes == nil {
 		router.Routes = make(map[string]*DigitalTree)
@@ -174,7 +184,6 @@ func (router *Router) Register(method string, path string, handle Handle) {
 		router.Routes[method] = NewDigitalTree()
 	}
 
-	router.Logger("Registering: " + method + " " + pathobject[0])
 	router.Routes[method].Add(pathobject[0], handle, pathobject)
 }
 
@@ -187,22 +196,16 @@ func (router *Router) Unregister(method string, path string) {
 func (router *Router) Logger(message interface{}) {
 	if router.DebugLog {
 		log.Println(message)
-		router.WriteToAdminConsole(message)
 	}
 }
 
 // LogWrapper is wrapped around the handler to send logs to admin console
 func (router *Router) LogWrapper(h Handle) Handle {
 	return func(w http.ResponseWriter, r *http.Request, p NamedParams) {
-		router.WriteToAdminConsole("Received request[" + r.Method + "][" + r.RemoteAddr + "][" + r.RequestURI + "]")
-
-		var report interface{}
-
-		json.NewDecoder(r.Body).Decode(&report)
-
-		router.WriteToAdminConsole(report)
-
+		start := time.Now()
 		h(w, r, p)
+		duration := time.Since(start)
+		router.Logger(r.Method + " " + r.RemoteAddr + " " + duration.String() + " " + r.RequestURI)
 	}
 }
 

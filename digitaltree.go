@@ -1,4 +1,4 @@
-package main
+package jaakitrouter
 
 // Node ...
 type Node struct {

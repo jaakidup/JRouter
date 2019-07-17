@@ -1,56 +1,40 @@
-package main
+package jaakitrouter
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 )
 
 var router *Router
 
-// ConfigRouting sets up all the server routes
-func ConfigRouting() {
+func main() {
 
 	router = &Router{DebugLog: true}
-	router.GET("/person/@something", router.LogWrapper(router.getPerson))
-	router.GET("/test/@sub/@cool", router.testGet)
-	// router.GET("/get", router.LogWrapper(router.testGet))
-	// router.GET("/remove", router.LogWrapper(router.testRemove))
-	// router.GET("/list", router.LogWrapper(router.listHandler))
 
-	router.NotFoundHandler = http.FileServer(http.Dir("public"))
-	router.AdminHandler = router.adminHandler
+	router.GET("/person/@something/@spectacular", router.LogWrapper(router.getUsers))
+	router.GET("/list", router.listHandler)
+	router.GET("/", router.index)
+
+	router.Logger("Starting Server on :8081")
+	log.Fatal(http.ListenAndServe(":8081", router))
 
 }
 
-func main() {
+func (router *Router) index(w http.ResponseWriter, r *http.Request, _ NamedParams) {
+	w.Write([]byte("<div align='center'>Index page, use GET /users</div>"))
+}
+func (router *Router) getUsers(w http.ResponseWriter, r *http.Request, params NamedParams) {
+	w.Header().Set("content-type", "application/json")
+	json.NewEncoder(w).Encode(params)
+}
+func (router *Router) listHandler(w http.ResponseWriter, r *http.Request, params NamedParams) {
+	w.Header().Set("Content-Type", "application/json")
 
-	ConfigRouting()
+	var results []interface{}
 
-	log.Fatal(http.ListenAndServe(":8081", router))
+	results = append(results, router.Routes["GET"].ListKeys("GET"))
+	results = append(results, router.Routes["POST"].ListKeys("POST"))
 
-	// sigs := make(chan os.Signal, 1)
-	// done := make(chan bool, 1)
-	// signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-
-	// go func() {
-
-	// 	sig := <-sigs
-	// 	fmt.Println()
-	// 	fmt.Println(sig)
-
-	// 	done <- true
-	// }()
-	// go func() {
-	// 	log.Fatal(http.ListenAndServe(":8081", router))
-	// }()
-
-	// fmt.Println("")
-	// router.Logger("JRouter running on port :8081")
-	// fmt.Println("")
-
-	// fmt.Println("CTRL + C to shutdown")
-	// <-done
-	// fmt.Println("Shutdown procedure ...")
-	// router.WriteToAdminConsole("JRouter Shutdown procedure ...")
-
+	json.NewEncoder(w).Encode(results)
 }
